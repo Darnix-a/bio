@@ -68,7 +68,7 @@ export default function Home() {
             <h1 className="text-2xl font-bold">Darnix</h1>
             <p className="text-[#c77dff] text-center">(darnixgotbanned on discord)</p>
             <p className="text-[#c77dff] text-center">
-              <a href="https://syphon.cc" className="text-[#9d4edd] hover:text-[#7b2cbf]">Syphon.cc</a> co-owner<br />
+              <a href="https://fatality.win/members/darnix.49526/" className="text-[#9d4edd] hover:text-[#7b2cbf]">Proud fatality</a> user<br />
               Lexis support
             </p>
           </div>
