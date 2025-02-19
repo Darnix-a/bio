@@ -77,14 +77,6 @@ export default function Home() {
           {/* Social Links */}
           <div className="mt-8 space-y-3 w-full max-w-md">
             <a
-              href="https://discord.gg/hMKFdmgySt"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center bg-[#c77dff] hover:bg-[#e0aaff] text-[#10002b] px-6 py-3 rounded-lg transition-colors"
-            >
-              <span>Syphon.cc Discord</span>
-            </a>
-            <a
               href="https://steamcommunity.com/id/shikanokonokokoschitantan/"
               target="_blank"
               rel="noopener noreferrer"
