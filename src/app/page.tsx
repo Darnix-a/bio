@@ -90,7 +90,6 @@ export default function Home() {
               Proud <a href="https://fatality.win/members/darnix.49526/" className="text-purple-400 hover:text-purple-300 transition-colors font-semibold hover:scale-110 inline-block">
                 fatality
               </a> user<br />
-              Lexis support
             </p>
           </div>
 
