@@ -84,12 +84,18 @@ export default function Home() {
                 priority
               />
             </div>
-            <h1 className="text-3xl font-bold text-white">Darnix</h1>
-            <p className="text-purple-300 text-center text-lg">(darnixgotbanned on discord)</p>
+            <div className="text-center">
+              <h1 className="text-3xl font-bold text-white">Darnix</h1>
+              <p className="text-purple-300/50 text-sm mt-0.5">(darnixgotbanned on discord)</p>
+            </div>
             <p className="text-purple-300 text-center text-lg">
               Proud <a href="https://fatality.win/members/darnix.49526/" className="text-purple-400 hover:text-purple-300 transition-colors font-semibold hover:scale-110 inline-block">
                 fatality
-              </a> user<br />
+              </a> user & Gambling enjoyer
+            </p>
+
+            <p className="text-purple-200/40 text-center text-sm italic mt-1">
+              "The quieter you become, the more you can hear"
             </p>
           </div>
 
@@ -98,17 +104,36 @@ export default function Home() {
               href="https://steamcommunity.com/id/shikanokonokokoschitantan/"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center bg-purple-700 hover:bg-purple-600 text-white px-6 py-4 rounded-lg transition-all hover:scale-110 shadow-lg w-full hover:shadow-purple-500/50"
+              className="flex items-center justify-center bg-gradient-to-b from-purple-600 to-purple-700 text-white px-6 py-4 rounded-lg transition-all hover:scale-110 shadow-lg w-full hover:shadow-purple-500/50"
             >
               <span>Steam</span>
             </a>
+
             <a
               href="https://github.com/Darnix-a"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center bg-purple-800 hover:bg-purple-700 text-white px-6 py-4 rounded-lg transition-all hover:scale-110 shadow-lg w-full hover:shadow-purple-500/50"
+              className="flex items-center justify-center bg-gradient-to-b from-purple-700 to-purple-800 text-white px-6 py-4 rounded-lg transition-all hover:scale-110 shadow-lg w-full hover:shadow-purple-500/50"
             >
               <span>GitHub</span>
+            </a>
+
+            <a
+              href="https://www.faceit.com/en/players/d4rnix"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center bg-gradient-to-b from-purple-800 to-purple-900 text-white px-6 py-4 rounded-lg transition-all hover:scale-110 shadow-lg w-full hover:shadow-purple-500/50"
+            >
+              <span>FACEIT</span>
+            </a>
+
+            <a
+              href="https://www.youtube.com/@bingusschmingus"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center bg-gradient-to-b from-purple-900 to-purple-950 text-white px-6 py-4 rounded-lg transition-all hover:scale-110 shadow-lg w-full hover:shadow-purple-500/50"
+            >
+              <span>YouTube</span>
             </a>
           </div>
         </div>
