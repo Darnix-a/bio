@@ -243,7 +243,10 @@ export default function Home() {
               transform: 'translate(-50%, -50%)'
             }}
           >
-            <div className="animate-ripple rounded-full border-2 border-purple-500/50" />
+            {/* Main ripple */}
+            <div className="animate-ripple rounded-full border-[3px] border-purple-300/80" />
+            {/* Center flash */}
+            <div className="animate-flash absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-purple-200/90 rounded-full blur-[2px]" />
           </div>
         ))}
 
