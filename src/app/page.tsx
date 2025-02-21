@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from '@/lib/supabase';
 import crypto from 'crypto';
 
@@ -9,6 +9,10 @@ export default function Home() {
   const [mousePosition, setMousePosition] = useState({ x: 50, y: 50 });
   const [visitorCount, setVisitorCount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [clickEffects, setClickEffects] = useState<Array<{ x: number; y: number; id: number }>>([]);
+  let nextEffectId = 0;
+  const [tiltEffect, setTiltEffect] = useState({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Mouse tracking effect
   useEffect(() => {
@@ -132,6 +136,43 @@ export default function Home() {
       });
   };
 
+  const handleBackgroundClick = useCallback((e: React.MouseEvent) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    
+    const newEffect = {
+      x,
+      y,
+      id: nextEffectId++
+    };
+    
+    setClickEffects(prev => [...prev, newEffect]);
+    setTimeout(() => {
+      setClickEffects(prev => prev.filter(effect => effect.id !== newEffect.id));
+    }, 1000);
+  }, []);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!containerRef.current) return;
+    
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    
+    const tiltX = (y - centerY) / 20;
+    const tiltY = (centerX - x) / 20;
+    
+    setTiltEffect({ x: tiltX, y: tiltY });
+  };
+
+  const handleMouseLeave = () => {
+    setTiltEffect({ x: 0, y: 0 });
+  };
+
   return (
     <div>
       {/* Visitor Counter */}
@@ -145,23 +186,25 @@ export default function Home() {
 
       <div 
         className="min-h-screen relative"
+        onClick={handleBackgroundClick}
         style={{
           background: `radial-gradient(circle at ${mousePosition.x}% ${mousePosition.y}%, rgba(93, 0, 255, 0.15) 0%, rgb(36, 0, 70) 35%, rgb(16, 0, 43) 100%)`
         }}
       >
-        {/* Background orb */}
-        <div 
-          className="absolute blur-2xl opacity-20 pointer-events-none transition-transform duration-100 ease-out"
-          style={{
-            left: `${mousePosition.x}%`,
-            top: `${mousePosition.y}%`,
-            transform: 'translate(-50%, -50%)',
-            width: '20vmin',
-            height: '20vmin',
-            background: 'rgb(147, 51, 234)',
-            borderRadius: '50%',
-          }}
-        />
+        {/* Click effects */}
+        {clickEffects.map(effect => (
+          <div
+            key={effect.id}
+            className="absolute pointer-events-none"
+            style={{
+              left: `${effect.x}%`,
+              top: `${effect.y}%`,
+              transform: 'translate(-50%, -50%)'
+            }}
+          >
+            <div className="animate-ripple rounded-full border-2 border-purple-500/50" />
+          </div>
+        ))}
 
         {showIntro ? (
           <div 
@@ -175,16 +218,39 @@ export default function Home() {
               }
             }}
           >
-            <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
-              <h1 className="text-6xl font-bold mb-8 text-white animate-fade-in">Welcome</h1>
-              <div className="text-2xl font-bold bg-purple-600/80 hover:bg-purple-500 px-8 py-4 rounded-lg shadow-lg transform hover:scale-110 transition-all duration-300 backdrop-blur-sm hover:shadow-purple-500/50">
-                Click Anywhere to Start
+            <div className="absolute inset-0 flex flex-col items-center justify-center z-10 backdrop-blur-sm bg-black/10">
+              <div className="text-center space-y-8 p-8 rounded-2xl bg-purple-900/20 backdrop-blur-sm border border-purple-500/20 shadow-xl transform hover:scale-105 transition-all duration-300">
+                <h1 className="text-7xl font-bold text-white animate-fade-in bg-clip-text text-transparent bg-gradient-to-b from-white to-purple-300">
+                  Welcome
+                </h1>
+                <div className="space-y-4">
+                  <p className="text-xl text-purple-200/80">
+                    Enter Darnix's Personal Bio
+                  </p>
+                  <div className="text-lg font-medium bg-purple-600/30 hover:bg-purple-500/40 px-8 py-4 rounded-lg shadow-lg transform hover:scale-110 transition-all duration-300 backdrop-blur-sm hover:shadow-purple-500/50 group">
+                    Click Anywhere to Start
+                    <div className="h-0.5 w-0 group-hover:w-full bg-purple-400/50 transition-all duration-300" />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         ) : (
           <div className="min-h-screen text-white flex flex-col items-center justify-center p-8 relative">
-            <div className="flex flex-col items-center space-y-6 bg-black/20 backdrop-blur-sm p-8 rounded-2xl z-10 w-full max-w-md">
+            <div 
+              ref={containerRef}
+              onMouseMove={handleMouseMove}
+              onMouseLeave={handleMouseLeave}
+              className="flex flex-col items-center space-y-6 bg-black/20 backdrop-blur-sm p-8 rounded-2xl z-10 w-full max-w-md transition-transform duration-200 ease-out"
+              style={{
+                transform: `perspective(1000px) rotateX(${tiltEffect.x}deg) rotateY(${tiltEffect.y}deg)`,
+                boxShadow: `
+                  ${-tiltEffect.y}px ${-tiltEffect.x}px 20px rgba(139, 92, 246, 0.1),
+                  0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                  0 2px 4px -1px rgba(0, 0, 0, 0.06)
+                `
+              }}
+            >
               <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-purple-500 transform hover:scale-105 transition-all duration-300 shadow-lg">
                 <Image
                   src="/profile.jpg"
@@ -195,14 +261,12 @@ export default function Home() {
                   priority
                 />
               </div>
-              <div className="text-center">
-                <h1 className="text-3xl font-bold text-white">Darnix</h1>
-                <p className="text-purple-300/50 text-sm mt-0.5">(darnixgotbanned on discord)</p>
-              </div>
+              <h1 className="text-3xl font-bold text-white">Darnix</h1>
+              <p className="text-purple-300/50 text-sm mt-0.5">(darnixgotbanned on discord)</p>
               <p className="text-purple-300 text-center text-lg">
                 Proud <a href="https://fatality.win/members/darnix.49526/" className="text-purple-400 hover:text-purple-300 transition-colors font-semibold hover:scale-110 inline-block">
                   fatality
-                </a> user & Gambling enjoyer
+                </a> user & CS2 developer
               </p>
 
               <p className="text-purple-200/40 text-center text-sm italic mt-1">
@@ -215,7 +279,7 @@ export default function Home() {
                 href="https://steamcommunity.com/id/shikanokonokokoschitantan/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center bg-gradient-to-b from-purple-600 to-purple-700 text-white px-6 py-4 rounded-lg transition-all hover:scale-110 shadow-lg w-full hover:shadow-purple-500/50"
+                className="flex items-center justify-center bg-gradient-to-b from-purple-600 to-purple-700 text-white px-6 py-4 rounded-lg transition-all hover:scale-110 shadow-lg w-full hover:shadow-purple-500/50 hover:from-purple-500 hover:to-purple-600 hover:shadow-xl"
               >
                 <span>Steam</span>
               </a>
@@ -224,25 +288,25 @@ export default function Home() {
                 href="https://github.com/Darnix-a"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center bg-gradient-to-b from-purple-700 to-purple-800 text-white px-6 py-4 rounded-lg transition-all hover:scale-110 shadow-lg w-full hover:shadow-purple-500/50"
+                className="flex items-center justify-center bg-gradient-to-b from-purple-700 to-purple-800 text-white px-6 py-4 rounded-lg transition-all hover:scale-110 shadow-lg w-full hover:shadow-purple-600/50 hover:from-purple-600 hover:to-purple-700 hover:shadow-xl"
               >
                 <span>GitHub</span>
               </a>
 
               <a
-                href="https://www.faceit.com/en/players/d4rnix"
+                href="https://www.faceit.com/en/players/YOUR_FACEIT"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center bg-gradient-to-b from-purple-800 to-purple-900 text-white px-6 py-4 rounded-lg transition-all hover:scale-110 shadow-lg w-full hover:shadow-purple-500/50"
+                className="flex items-center justify-center bg-gradient-to-b from-purple-800 to-purple-900 text-white px-6 py-4 rounded-lg transition-all hover:scale-110 shadow-lg w-full hover:shadow-purple-700/50 hover:from-purple-700 hover:to-purple-800 hover:shadow-xl"
               >
                 <span>FACEIT</span>
               </a>
 
               <a
-                href="https://www.youtube.com/@bingusschmingus"
+                href="https://www.youtube.com/@YOUR_YOUTUBE"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center bg-gradient-to-b from-purple-900 to-purple-950 text-white px-6 py-4 rounded-lg transition-all hover:scale-110 shadow-lg w-full hover:shadow-purple-500/50"
+                className="flex items-center justify-center bg-gradient-to-b from-purple-900 to-purple-950 text-white px-6 py-4 rounded-lg transition-all hover:scale-110 shadow-lg w-full hover:shadow-purple-800/50 hover:from-purple-800 hover:to-purple-900 hover:shadow-xl"
               >
                 <span>YouTube</span>
               </a>
