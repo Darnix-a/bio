@@ -22,6 +22,7 @@ export default function Home() {
   const [showBrainrot, setShowBrainrot] = useState(false);
   const [videoPositions, setVideoPositions] = useState<Array<{id: number, x: number, y: number, videoIndex: number}>>([]);
   const [pfpRotation, setPfpRotation] = useState(0);
+  const videoRefs = useRef<{[key: string]: HTMLVideoElement | null}>({});
 
   const brainrotVideos = [
     '/brainrot1.mp4',
@@ -515,11 +516,16 @@ export default function Home() {
                 }}
               >
                 <video
+                  ref={(el) => {
+                    if (el) {
+                      videoRefs.current[pos.id] = el;
+                      el.volume = brainrotVideos[pos.videoIndex] === '/brainrot2.mp4' ? 0.6 : 1;
+                    }
+                  }}
                   autoPlay
                   loop
                   playsInline
                   className="w-full h-full object-cover rounded-lg opacity-80 animate-fade-in-scale"
-                  volume={brainrotVideos[pos.videoIndex] === '/brainrot2.mp4' ? 0.1 : 1}
                 >
                   <source src={brainrotVideos[pos.videoIndex]} type="video/mp4" />
                 </video>
