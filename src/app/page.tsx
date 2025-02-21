@@ -238,10 +238,6 @@ export default function Home() {
               >
                 <h1 className="text-7xl font-bold text-white animate-fade-in bg-clip-text text-transparent bg-gradient-to-b from-white to-purple-300">
                   Welcome
-                </h1>
-                <div className="space-y-4">
-                  <p className="text-xl text-purple-200/80">
-                    Enter Darnix's Portfolio
                   </p>
                   <div className="text-lg font-medium bg-purple-600/30 hover:bg-purple-500/40 px-8 py-4 rounded-lg shadow-lg transform hover:scale-110 transition-all duration-300 backdrop-blur-sm hover:shadow-purple-500/50 group">
                     Click Anywhere to Start
