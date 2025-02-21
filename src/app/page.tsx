@@ -264,7 +264,7 @@ export default function Home() {
                 ref={welcomeRef}
                 onMouseMove={(e) => handleMouseMove(e, true)}
                 onMouseLeave={() => handleMouseLeave(true)}
-                className="text-center space-y-8 p-8 rounded-2xl bg-purple-900/20 backdrop-blur-sm border border-purple-500/20 shadow-xl transform transition-all duration-200 ease-out"
+                className="text-center space-y-8 p-8 rounded-2xl bg-purple-900/20 backdrop-blur-sm border border-purple-500/20 shadow-xl transform transition-all duration-200 ease-out w-11/12 max-w-lg mx-auto"
                 style={{
                   transform: `perspective(1000px) rotateX(${welcomeTilt.x}deg) rotateY(${welcomeTilt.y}deg)`,
                   boxShadow: `
@@ -275,7 +275,7 @@ export default function Home() {
                 }}
               >
                 <h1 
-                  className="text-7xl font-bold relative group cursor-default select-none animate-float"
+                  className="text-4xl md:text-7xl font-bold relative group cursor-default select-none animate-float"
                   onMouseEnter={() => setTextHover(true)}
                   onMouseLeave={() => setTextHover(false)}
                 >
@@ -305,7 +305,7 @@ export default function Home() {
                   {/* Additional glow effect */}
                   <div className="absolute -inset-1 bg-gradient-to-r from-purple-600/0 via-purple-400/10 to-purple-600/0 rounded-lg blur-xl transition-all duration-300 opacity-0 group-hover:opacity-100" />
                 </h1>
-                <div className="text-lg font-medium bg-purple-600/30 hover:bg-purple-500/40 px-8 py-4 rounded-lg shadow-lg transform hover:scale-110 transition-all duration-300 backdrop-blur-sm hover:shadow-purple-500/50 group">
+                <div className="text-base md:text-lg font-medium bg-purple-600/30 hover:bg-purple-500/40 px-4 md:px-8 py-3 md:py-4 rounded-lg shadow-lg transform hover:scale-110 transition-all duration-300 backdrop-blur-sm hover:shadow-purple-500/50 group">
                   Click Anywhere to Start
                   <div className="h-0.5 w-0 group-hover:w-full bg-purple-400/50 transition-all duration-300" />
                 </div>
@@ -313,12 +313,12 @@ export default function Home() {
             </div>
           </div>
         ) : (
-          <div className="min-h-screen text-white flex flex-col items-center justify-center p-8 relative">
+          <div className="min-h-screen text-white flex flex-col items-center justify-center p-4 md:p-8 relative">
             <div 
               ref={containerRef}
               onMouseMove={(e) => handleMouseMove(e)}
               onMouseLeave={() => handleMouseLeave()}
-              className="flex flex-col items-center space-y-6 bg-black/20 backdrop-blur-sm p-8 rounded-2xl z-10 w-full max-w-md transition-transform duration-200 ease-out"
+              className="flex flex-col items-center space-y-4 md:space-y-6 bg-black/20 backdrop-blur-sm p-6 md:p-8 rounded-2xl z-10 w-11/12 max-w-md transition-transform duration-200 ease-out"
               style={{
                 transform: `perspective(1000px) rotateX(${tiltEffect.x}deg) rotateY(${tiltEffect.y}deg)`,
                 boxShadow: `
@@ -328,19 +328,19 @@ export default function Home() {
                 `
               }}
             >
-              <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-purple-500 transform hover:scale-105 transition-all duration-300 shadow-lg">
+              <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-purple-500 shadow-lg animate-fade-in-scale">
                 <Image
                   src="/profile.jpg"
                   alt="Profile Picture"
                   width={128}
                   height={128}
-                  className="object-cover hover:opacity-90 transition-opacity"
+                  className="object-cover transition-opacity hover:opacity-90"
                   priority
                 />
               </div>
-              <h1 className="text-3xl font-bold text-white">Darnix</h1>
+              <h1 className="text-2xl md:text-3xl font-bold text-white">Darnix</h1>
               <p className="text-purple-300/50 text-sm mt-0.5">(darnixgotbanned on discord)</p>
-              <p className="text-purple-300 text-center text-lg">
+              <p className="text-purple-300 text-center text-base md:text-lg">
                 Proud <a href="https://fatality.win/members/darnix.49526/" className="text-purple-400 hover:text-purple-300 transition-colors font-semibold hover:scale-110 inline-block">
                   fatality
                 </a> user & aspiring developer
@@ -351,66 +351,70 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="mt-12 space-y-4 w-full max-w-md z-10">
-              <a
-                href="https://steamcommunity.com/id/shikanokonokokoschitantan/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center bg-gradient-to-b from-purple-600 to-purple-700 text-white px-6 py-4 rounded-lg transition-all hover:scale-110 shadow-lg w-full hover:shadow-purple-500/50 hover:from-purple-500 hover:to-purple-600 hover:shadow-xl"
-              >
-                <span>Steam</span>
-              </a>
+            {/* Buttons and Audio Controls Container */}
+            <div className="mt-8 md:mt-12 w-11/12 max-w-md z-10 space-y-6 md:space-y-8">
+              {/* Buttons */}
+              <div className="space-y-3 md:space-y-4">
+                <a
+                  href="https://steamcommunity.com/id/shikanokonokokoschitantan/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center bg-gradient-to-b from-purple-600 to-purple-700 text-white px-6 py-4 rounded-lg transition-all hover:scale-110 shadow-lg w-full hover:shadow-purple-500/50 hover:from-purple-500 hover:to-purple-600 hover:shadow-xl"
+                >
+                  <span>Steam</span>
+                </a>
 
-              <a
-                href="https://github.com/Darnix-a"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center bg-gradient-to-b from-purple-700 to-purple-800 text-white px-6 py-4 rounded-lg transition-all hover:scale-110 shadow-lg w-full hover:shadow-purple-600/50 hover:from-purple-600 hover:to-purple-700 hover:shadow-xl"
-              >
-                <span>GitHub</span>
-              </a>
+                <a
+                  href="https://github.com/Darnix-a"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center bg-gradient-to-b from-purple-700 to-purple-800 text-white px-6 py-4 rounded-lg transition-all hover:scale-110 shadow-lg w-full hover:shadow-purple-600/50 hover:from-purple-600 hover:to-purple-700 hover:shadow-xl"
+                >
+                  <span>GitHub</span>
+                </a>
 
-              <a
-                href="https://www.faceit.com/en/players/d4rnix"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center bg-gradient-to-b from-purple-800 to-purple-900 text-white px-6 py-4 rounded-lg transition-all hover:scale-110 shadow-lg w-full hover:shadow-purple-700/50 hover:from-purple-700 hover:to-purple-800 hover:shadow-xl"
-              >
-                <span>FACEIT</span>
-              </a>
+                <a
+                  href="https://www.faceit.com/en/players/d4rnix"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center bg-gradient-to-b from-purple-800 to-purple-900 text-white px-6 py-4 rounded-lg transition-all hover:scale-110 shadow-lg w-full hover:shadow-purple-700/50 hover:from-purple-700 hover:to-purple-800 hover:shadow-xl"
+                >
+                  <span>FACEIT</span>
+                </a>
 
-              <a
-                href="https://www.youtube.com/@bingusschmingus"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center bg-gradient-to-b from-purple-900 to-purple-950 text-white px-6 py-4 rounded-lg transition-all hover:scale-110 shadow-lg w-full hover:shadow-purple-800/50 hover:from-purple-800 hover:to-purple-900 hover:shadow-xl"
-              >
-                <span>YouTube</span>
-              </a>
+                <a
+                  href="https://www.youtube.com/@bingusschmingus"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center bg-gradient-to-b from-purple-900 to-purple-950 text-white px-6 py-4 rounded-lg transition-all hover:scale-110 shadow-lg w-full hover:shadow-purple-800/50 hover:from-purple-800 hover:to-purple-900 hover:shadow-xl"
+                >
+                  <span>YouTube</span>
+                </a>
+              </div>
 
-              {/* Audio Controls */}
-              <div className="mt-8 flex flex-col items-center space-y-4 bg-black/30 backdrop-blur-sm p-4 rounded-xl">
-                <div className="flex items-center justify-center w-full space-x-4">
+              {/* Audio Controls - now same width as buttons */}
+              <div className="bg-black/30 backdrop-blur-sm rounded-xl overflow-hidden">
+                <div className="flex items-center px-4 py-4">
                   <button
                     onClick={togglePlay}
-                    className="p-2 rounded-lg bg-purple-600/30 hover:bg-purple-500/40 transition-all duration-300 group"
+                    className="p-2.5 rounded-lg bg-purple-600/30 hover:bg-purple-500/40 transition-all duration-300 group mr-4"
                   >
                     {isPlaying ? (
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-purple-200/80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 md:h-6 md:w-6 text-purple-200/80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6" />
                       </svg>
                     ) : (
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-purple-200/80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 md:h-6 md:w-6 text-purple-200/80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     )}
                   </button>
                   
-                  <div className="flex-1 flex items-center space-x-2">
+                  <div className="flex-1 flex items-center">
                     <svg 
                       xmlns="http://www.w3.org/2000/svg" 
-                      className="h-5 w-5 text-purple-300/50" 
+                      className="h-4 w-4 md:h-5 md:w-5 text-purple-300/50 mr-3" 
                       viewBox="0 0 20 20" 
                       fill="currentColor"
                     >
@@ -423,7 +427,17 @@ export default function Home() {
                       step="0.01"
                       value={volume}
                       onChange={handleVolumeChange}
-                      className="w-full h-2 rounded-lg appearance-none cursor-pointer bg-purple-900/30 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-purple-400 hover:[&::-webkit-slider-thumb]:bg-purple-300 [&::-webkit-slider-thumb]:transition-colors"
+                      className="w-full h-2 rounded-lg appearance-none cursor-pointer bg-purple-900/30 
+                        [&::-webkit-slider-thumb]:appearance-none 
+                        [&::-webkit-slider-thumb]:h-3.5 
+                        [&::-webkit-slider-thumb]:w-3.5 
+                        md:[&::-webkit-slider-thumb]:h-4 
+                        md:[&::-webkit-slider-thumb]:w-4 
+                        [&::-webkit-slider-thumb]:rounded-full 
+                        [&::-webkit-slider-thumb]:bg-purple-400 
+                        hover:[&::-webkit-slider-thumb]:bg-purple-300 
+                        [&::-webkit-slider-thumb]:transition-colors
+                        [&::-webkit-slider-thumb]:shadow-sm"
                     />
                   </div>
                 </div>
