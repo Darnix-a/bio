@@ -282,7 +282,7 @@ export default function Home() {
               <p className="text-purple-300 text-center text-lg">
                 Proud <a href="https://fatality.win/members/darnix.49526/" className="text-purple-400 hover:text-purple-300 transition-colors font-semibold hover:scale-110 inline-block">
                   fatality
-                </a> user & CS2 developer
+                </a> user & Gambling enjoyer
               </p>
 
               <p className="text-purple-200/40 text-center text-sm italic mt-1">
