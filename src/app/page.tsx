@@ -19,6 +19,17 @@ export default function Home() {
   const [volume, setVolume] = useState(0.5);
   const [isPlaying, setIsPlaying] = useState(true);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [showBrainrot, setShowBrainrot] = useState(false);
+  const [videoPositions, setVideoPositions] = useState<Array<{id: number, x: number, y: number, videoIndex: number}>>([]);
+  const [pfpRotation, setPfpRotation] = useState(0);
+
+  const brainrotVideos = [
+    '/brainrot1.mp4',
+    '/brainrot2.mp4',
+    '/brainrot3.mp4',
+    '/brainrot4.mp4',
+    '/brainrot5.mp4'
+  ];
 
   // Mouse tracking effect
   useEffect(() => {
@@ -331,15 +342,60 @@ export default function Home() {
                 `
               }}
             >
-              <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-purple-500 shadow-lg animate-fade-in-scale">
+              <div 
+                className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-purple-500 shadow-lg animate-fade-in-scale cursor-pointer group relative"
+                onClick={() => {
+                  setPfpRotation(prev => prev + 360);
+                  setShowBrainrot(true);
+                  
+                  // Stop background music
+                  if (audioRef.current) {
+                    audioRef.current.pause();
+                  }
+                  
+                  // Add initial videos
+                  for (let i = 0; i < 3; i++) {
+                    setTimeout(() => {
+                      setVideoPositions(prev => [...prev, {
+                        id: Math.random(),
+                        x: Math.random() * 80 + 10,
+                        y: Math.random() * 80 + 10,
+                        videoIndex: Math.floor(Math.random() * brainrotVideos.length)
+                      }]);
+                    }, i * 200);
+                  }
+
+                  // Keep adding videos periodically
+                  const interval = setInterval(() => {
+                    setVideoPositions(prev => [...prev, {
+                      id: Math.random(),
+                      x: Math.random() * 80 + 10,
+                      y: Math.random() * 80 + 10,
+                      videoIndex: Math.floor(Math.random() * brainrotVideos.length)
+                    }]);
+                  }, 2000);
+
+                  // Clean up interval after 30 seconds
+                  setTimeout(() => clearInterval(interval), 30000);
+                }}
+                style={{
+                  transform: `rotate(${pfpRotation}deg)`,
+                  transition: 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+                }}
+              >
                 <Image
                   src="/profile.jpg"
                   alt="Profile Picture"
                   width={128}
                   height={128}
-                  className="object-cover transition-opacity hover:opacity-90"
+                  className="object-cover transition-opacity group-hover:opacity-90"
                   priority
+                  onContextMenu={(e) => e.preventDefault()}
+                  draggable="false"
                 />
+                <span className="absolute inset-0 flex items-center justify-center text-sm text-purple-300/80 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none bg-black/40 backdrop-blur-[2px]">
+                  click me
+                </span>
               </div>
               <h1 className="text-2xl md:text-3xl font-bold text-white">Darnix</h1>
               <p className="text-purple-300/50 text-sm mt-0.5">(darnixgotbanned on discord)</p>
@@ -446,6 +502,46 @@ export default function Home() {
                 </div>
               </div>
             </div>
+
+            {showBrainrot && videoPositions.map(pos => (
+              <div
+                key={pos.id}
+                className="fixed w-32 h-32 md:w-48 md:h-48 pointer-events-none"
+                style={{
+                  left: `${pos.x}%`,
+                  top: `${pos.y}%`,
+                  transform: 'translate(-50%, -50%)',
+                  zIndex: 20
+                }}
+              >
+                <video
+                  autoPlay
+                  loop
+                  playsInline
+                  className="w-full h-full object-cover rounded-lg opacity-80 animate-fade-in-scale"
+                  volume={brainrotVideos[pos.videoIndex] === '/brainrot2.mp4' ? 0.1 : 1}
+                >
+                  <source src={brainrotVideos[pos.videoIndex]} type="video/mp4" />
+                </video>
+              </div>
+            ))}
+
+            {showBrainrot && (
+              <button
+                onClick={() => {
+                  setShowBrainrot(false);
+                  setVideoPositions([]);
+                  // Restore background music
+                  if (audioRef.current) {
+                    audioRef.current.volume = logToLinear(volume);
+                    audioRef.current.play();
+                  }
+                }}
+                className="fixed bottom-4 right-4 z-50 bg-purple-600/80 hover:bg-purple-500/80 text-white px-4 py-2 rounded-lg backdrop-blur-sm transition-all duration-200 hover:scale-110"
+              >
+                Make it stop 💀
+              </button>
+            )}
           </div>
         )}
       </div>
