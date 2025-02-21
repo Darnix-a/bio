@@ -12,7 +12,9 @@ export default function Home() {
   const [clickEffects, setClickEffects] = useState<Array<{ x: number; y: number; id: number }>>([]);
   let nextEffectId = 0;
   const [tiltEffect, setTiltEffect] = useState({ x: 0, y: 0 });
+  const [welcomeTilt, setWelcomeTilt] = useState({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
+  const welcomeRef = useRef<HTMLDivElement>(null);
 
   // Mouse tracking effect
   useEffect(() => {
@@ -153,24 +155,25 @@ export default function Home() {
     }, 1000);
   }, []);
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!containerRef.current) return;
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>, isWelcome = false) => {
+    const ref = isWelcome ? welcomeRef : containerRef;
+    if (!ref.current) return;
     
-    const rect = containerRef.current.getBoundingClientRect();
+    const rect = ref.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
     
-    const tiltX = (y - centerY) / 20;
-    const tiltY = (centerX - x) / 20;
+    const tiltX = (y - centerY) / 15;
+    const tiltY = (centerX - x) / 15;
     
-    setTiltEffect({ x: tiltX, y: tiltY });
+    isWelcome ? setWelcomeTilt({ x: tiltX, y: tiltY }) : setTiltEffect({ x: tiltX, y: tiltY });
   };
 
-  const handleMouseLeave = () => {
-    setTiltEffect({ x: 0, y: 0 });
+  const handleMouseLeave = (isWelcome = false) => {
+    isWelcome ? setWelcomeTilt({ x: 0, y: 0 }) : setTiltEffect({ x: 0, y: 0 });
   };
 
   return (
@@ -219,13 +222,26 @@ export default function Home() {
             }}
           >
             <div className="absolute inset-0 flex flex-col items-center justify-center z-10 backdrop-blur-sm bg-black/10">
-              <div className="text-center space-y-8 p-8 rounded-2xl bg-purple-900/20 backdrop-blur-sm border border-purple-500/20 shadow-xl transform hover:scale-105 transition-all duration-300">
+              <div 
+                ref={welcomeRef}
+                onMouseMove={(e) => handleMouseMove(e, true)}
+                onMouseLeave={() => handleMouseLeave(true)}
+                className="text-center space-y-8 p-8 rounded-2xl bg-purple-900/20 backdrop-blur-sm border border-purple-500/20 shadow-xl transform transition-all duration-200 ease-out"
+                style={{
+                  transform: `perspective(1000px) rotateX(${welcomeTilt.x}deg) rotateY(${welcomeTilt.y}deg)`,
+                  boxShadow: `
+                    ${-welcomeTilt.y}px ${-welcomeTilt.x}px 20px rgba(139, 92, 246, 0.1),
+                    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                    0 2px 4px -1px rgba(0, 0, 0, 0.06)
+                  `
+                }}
+              >
                 <h1 className="text-7xl font-bold text-white animate-fade-in bg-clip-text text-transparent bg-gradient-to-b from-white to-purple-300">
                   Welcome
                 </h1>
                 <div className="space-y-4">
                   <p className="text-xl text-purple-200/80">
-                    Enter Darnix's Personal Bio
+                    Enter Darnix's Portfolio
                   </p>
                   <div className="text-lg font-medium bg-purple-600/30 hover:bg-purple-500/40 px-8 py-4 rounded-lg shadow-lg transform hover:scale-110 transition-all duration-300 backdrop-blur-sm hover:shadow-purple-500/50 group">
                     Click Anywhere to Start
@@ -239,8 +255,8 @@ export default function Home() {
           <div className="min-h-screen text-white flex flex-col items-center justify-center p-8 relative">
             <div 
               ref={containerRef}
-              onMouseMove={handleMouseMove}
-              onMouseLeave={handleMouseLeave}
+              onMouseMove={(e) => handleMouseMove(e)}
+              onMouseLeave={() => handleMouseLeave()}
               className="flex flex-col items-center space-y-6 bg-black/20 backdrop-blur-sm p-8 rounded-2xl z-10 w-full max-w-md transition-transform duration-200 ease-out"
               style={{
                 transform: `perspective(1000px) rotateX(${tiltEffect.x}deg) rotateY(${tiltEffect.y}deg)`,
