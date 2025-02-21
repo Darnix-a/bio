@@ -249,7 +249,7 @@ export default function Home() {
 
         {showIntro ? (
           <div 
-            className="min-h-screen select-none relative overflow-hidden text-white transition-colors duration-500"
+            className="min-h-screen select-none relative text-white"
             onClick={handleStart}
             role="button"
             tabIndex={0}
@@ -259,7 +259,7 @@ export default function Home() {
               }
             }}
           >
-            <div className="absolute inset-0 flex flex-col items-center justify-center z-10 backdrop-blur-sm bg-black/10">
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
               <div 
                 ref={welcomeRef}
                 onMouseMove={(e) => handleMouseMove(e, true)}
@@ -275,7 +275,7 @@ export default function Home() {
                 }}
               >
                 <h1 
-                  className="text-4xl md:text-7xl font-bold relative group cursor-default select-none animate-float"
+                  className="text-5xl md:text-7xl font-bold relative group cursor-default select-none animate-float"
                   onMouseEnter={() => setTextHover(true)}
                   onMouseLeave={() => setTextHover(false)}
                 >
@@ -313,12 +313,12 @@ export default function Home() {
             </div>
           </div>
         ) : (
-          <div className="min-h-screen text-white flex flex-col items-center justify-center p-4 md:p-8 relative">
+          <div className="min-h-screen text-white flex flex-col items-center justify-center p-4 md:p-8">
             <div 
               ref={containerRef}
               onMouseMove={(e) => handleMouseMove(e)}
               onMouseLeave={() => handleMouseLeave()}
-              className="flex flex-col items-center space-y-4 md:space-y-6 bg-black/20 backdrop-blur-sm p-6 md:p-8 rounded-2xl z-10 w-11/12 max-w-md transition-transform duration-200 ease-out"
+              className="flex flex-col items-center space-y-4 md:space-y-6 bg-black/20 backdrop-blur-sm p-6 md:p-8 rounded-2xl w-11/12 max-w-md transition-transform duration-200 ease-out"
               style={{
                 transform: `perspective(1000px) rotateX(${tiltEffect.x}deg) rotateY(${tiltEffect.y}deg)`,
                 boxShadow: `
