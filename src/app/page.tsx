@@ -2,6 +2,7 @@
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { supabase } from '@/lib/supabase';
+import crypto from 'crypto';
 
 export default function Home() {
   const [showIntro, setShowIntro] = useState(true);
@@ -25,33 +26,61 @@ export default function Home() {
 
   // Visitor counter effect
   useEffect(() => {
-    const incrementVisitors = async () => {
+    const checkAndIncrementVisitors = async () => {
       try {
         setIsLoading(true);
-        
-        const { data: currentData, error: fetchError } = await supabase
-          .from('visitors')
-          .select('id, count')
-          .eq('id', 1)
+
+        // Get client IP
+        const response = await fetch('https://api.ipify.org?format=json');
+        const data = await response.json();
+        const ip = data.ip;
+        console.log('Got IP:', ip); // Debug log
+
+        // Create a hash of the IP (for privacy)
+        const ipHash = crypto
+          .createHash('sha256')
+          .update(ip)
+          .digest('hex');
+        console.log('Created hash:', ipHash); // Debug log
+
+        // Check if this IP has visited before
+        const { data: existingVisitor, error: checkError } = await supabase
+          .from('unique_visitors')
+          .select('ip_hash')
+          .eq('ip_hash', ipHash)
           .single();
 
-        if (fetchError) {
-          console.error('Error fetching count:', fetchError);
-          return;
-        }
+        console.log('Existing visitor check:', existingVisitor, checkError); // Debug log
 
-        if (!currentData) {
-          const { error: insertError } = await supabase
-            .from('visitors')
-            .insert([{ id: 1, count: 1 }]);
+        if (!existingVisitor) {
+          console.log('New visitor detected'); // Debug log
           
+          // New visitor - add to unique_visitors and increment count
+          const { error: insertError } = await supabase
+            .from('unique_visitors')
+            .insert([{ ip_hash: ipHash }]);
+
           if (insertError) {
-            console.error('Error inserting initial count:', insertError);
+            console.error('Error inserting new visitor:', insertError);
             return;
           }
-          setVisitorCount(1);
-        } else {
-          const newCount = currentData.count + 1;
+
+          // Get current count
+          const { data: currentData, error: countError } = await supabase
+            .from('visitors')
+            .select('count')
+            .eq('id', 1)
+            .single();
+
+          if (countError) {
+            console.error('Error getting current count:', countError);
+            return;
+          }
+
+          console.log('Current count:', currentData?.count); // Debug log
+
+          // Increment count
+          const newCount = (currentData?.count || 0) + 1;
           const { error: updateError } = await supabase
             .from('visitors')
             .update({ count: newCount })
@@ -62,7 +91,24 @@ export default function Home() {
             return;
           }
 
+          console.log('Updated count to:', newCount); // Debug log
           setVisitorCount(newCount);
+        } else {
+          console.log('Returning visitor'); // Debug log
+          
+          // Returning visitor - just get current count
+          const { data: currentData, error: countError } = await supabase
+            .from('visitors')
+            .select('count')
+            .eq('id', 1)
+            .single();
+
+          if (countError) {
+            console.error('Error getting current count:', countError);
+            return;
+          }
+
+          setVisitorCount(currentData?.count || 0);
         }
       } catch (error) {
         console.error('Error with visitor counter:', error);
@@ -71,7 +117,7 @@ export default function Home() {
       }
     };
 
-    incrementVisitors();
+    checkAndIncrementVisitors();
   }, []);
 
   const handleStart = () => {
