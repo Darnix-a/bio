@@ -310,7 +310,7 @@ export default function Home() {
               </a>
 
               <a
-                href="https://www.faceit.com/en/players/YOUR_FACEIT"
+                href="https://www.faceit.com/en/players/d4rnix"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center bg-gradient-to-b from-purple-800 to-purple-900 text-white px-6 py-4 rounded-lg transition-all hover:scale-110 shadow-lg w-full hover:shadow-purple-700/50 hover:from-purple-700 hover:to-purple-800 hover:shadow-xl"
@@ -319,7 +319,7 @@ export default function Home() {
               </a>
 
               <a
-                href="https://www.youtube.com/@YOUR_YOUTUBE"
+                href="https://www.youtube.com/@bingusschmingus"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center bg-gradient-to-b from-purple-900 to-purple-950 text-white px-6 py-4 rounded-lg transition-all hover:scale-110 shadow-lg w-full hover:shadow-purple-800/50 hover:from-purple-800 hover:to-purple-900 hover:shadow-xl"
