@@ -15,6 +15,7 @@ export default function Home() {
   const [welcomeTilt, setWelcomeTilt] = useState({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const welcomeRef = useRef<HTMLDivElement>(null);
+  const [textHover, setTextHover] = useState(false);
 
   // Mouse tracking effect
   useEffect(() => {
@@ -236,13 +237,40 @@ export default function Home() {
                   `
                 }}
               >
-                <h1 className="text-7xl font-bold text-white animate-fade-in bg-clip-text text-transparent bg-gradient-to-b from-white to-purple-300">
-                  Welcome
-                  </p>
-                  <div className="text-lg font-medium bg-purple-600/30 hover:bg-purple-500/40 px-8 py-4 rounded-lg shadow-lg transform hover:scale-110 transition-all duration-300 backdrop-blur-sm hover:shadow-purple-500/50 group">
-                    Click Anywhere to Start
-                    <div className="h-0.5 w-0 group-hover:w-full bg-purple-400/50 transition-all duration-300" />
-                  </div>
+                <h1 
+                  className="text-7xl font-bold relative group cursor-default select-none animate-float"
+                  onMouseEnter={() => setTextHover(true)}
+                  onMouseLeave={() => setTextHover(false)}
+                >
+                  {/* Enhanced glowing background effect */}
+                  <div 
+                    className="absolute inset-0 blur-[50px] bg-purple-500/50 rounded-full transition-all duration-300 group-hover:bg-purple-400/70 group-hover:blur-[100px]"
+                    style={{
+                      transform: textHover ? 'scale(1.5)' : 'scale(1)',
+                      opacity: textHover ? 1 : 0.7,
+                    }}
+                  />
+                  
+                  {/* Main text with enhanced gradient */}
+                  <span className="relative bg-clip-text text-transparent bg-gradient-to-b from-white via-purple-200 to-purple-400 hover:from-purple-100 hover:via-white hover:to-purple-300 transition-all duration-300 drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">
+                    <span className="inline-block hover:scale-125 transition-transform duration-150 hover:text-white">W</span>
+                    <span className="inline-block hover:scale-125 transition-transform duration-150 hover:text-white">e</span>
+                    <span className="inline-block hover:scale-125 transition-transform duration-150 hover:text-white">l</span>
+                    <span className="inline-block hover:scale-125 transition-transform duration-150 hover:text-white">c</span>
+                    <span className="inline-block hover:scale-125 transition-transform duration-150 hover:text-white">o</span>
+                    <span className="inline-block hover:scale-125 transition-transform duration-150 hover:text-white">m</span>
+                    <span className="inline-block hover:scale-125 transition-transform duration-150 hover:text-white">e</span>
+                  </span>
+
+                  {/* Enhanced animated border */}
+                  <div className="absolute -inset-2 border-2 border-purple-400/30 rounded-lg blur transition-all duration-300 opacity-0 group-hover:opacity-100" />
+                  
+                  {/* Additional glow effect */}
+                  <div className="absolute -inset-1 bg-gradient-to-r from-purple-600/0 via-purple-400/10 to-purple-600/0 rounded-lg blur-xl transition-all duration-300 opacity-0 group-hover:opacity-100" />
+                </h1>
+                <div className="text-lg font-medium bg-purple-600/30 hover:bg-purple-500/40 px-8 py-4 rounded-lg shadow-lg transform hover:scale-110 transition-all duration-300 backdrop-blur-sm hover:shadow-purple-500/50 group">
+                  Click Anywhere to Start
+                  <div className="h-0.5 w-0 group-hover:w-full bg-purple-400/50 transition-all duration-300" />
                 </div>
               </div>
             </div>
@@ -278,7 +306,7 @@ export default function Home() {
               <p className="text-purple-300 text-center text-lg">
                 Proud <a href="https://fatality.win/members/darnix.49526/" className="text-purple-400 hover:text-purple-300 transition-colors font-semibold hover:scale-110 inline-block">
                   fatality
-                </a> user & Gambling enjoyer
+                </a> user & aspiring developer
               </p>
 
               <p className="text-purple-200/40 text-center text-sm italic mt-1">

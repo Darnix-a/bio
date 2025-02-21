@@ -61,3 +61,16 @@ a:hover {
 .animate-ripple-inner {
   animation: ripple-inner 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) rotate(-1deg);
+  }
+  50% {
+    transform: translateY(-15px) rotate(1deg);
+  }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
