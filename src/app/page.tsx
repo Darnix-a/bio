@@ -1,8 +1,191 @@
 "use client";
 import Image from "next/image";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { supabase } from '@/lib/supabase';
 import crypto from 'crypto';
+
+const ParticleCanvas = () => {
+  useEffect(() => {
+    const canvas = document.createElement('canvas');
+    canvas.style.position = 'fixed';
+    canvas.style.top = '0';
+    canvas.style.left = '0';
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    canvas.style.pointerEvents = 'none';
+    canvas.style.zIndex = '1';
+    document.body.prepend(canvas);
+
+    const ctx = canvas.getContext('2d')!;
+    
+    const createParticle = (delay = 0) => ({
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      size: Math.random() * 2 + 2,
+      density: (Math.random() * 30) + 1,
+      vx: Math.random() * 0.3 - 0.15,
+      vy: Math.random() * 0.3 - 0.15,
+      baseVx: Math.random() * 0.3 - 0.15,
+      baseVy: Math.random() * 0.3 - 0.15,
+      isExploded: false,
+      spawnDelay: delay,
+      opacity: 0
+    });
+
+    const particles: Array<ReturnType<typeof createParticle>> = [];
+
+    // Initial particle creation (no delay for initial particles)
+    for (let i = 0; i < 100; i++) {
+      particles.push(createParticle());
+    }
+
+    let mouse = {
+      x: null as number | null,
+      y: null as number | null,
+      radius: 80
+    };
+
+    function handleMouseMove(e: MouseEvent) {
+      mouse.x = e.x;
+      mouse.y = e.y;
+    }
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    const handleExplosion = (x: number, y: number) => {
+      particles.forEach(particle => {
+        const dx = particle.x - x;
+        const dy = particle.y - y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const force = Math.max(0, (1200 - distance) / 1200);
+        
+        const angle = Math.atan2(dy, dx);
+        const speed = force * 35;
+        
+        particle.vx += Math.cos(angle) * speed;
+        particle.vy += (Math.sin(angle) * speed) - 2;
+        
+        particle.vx += (Math.random() - 0.5) * 5;
+        particle.vy += (Math.random() - 0.5) * 5;
+        
+        particle.isExploded = true;
+      });
+    };
+
+    const explosionHandler = (e: CustomEvent) => {
+      handleExplosion(e.detail.x, e.detail.y);
+    };
+
+    window.addEventListener('particle-explosion', explosionHandler as EventListener);
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const particle = particles[i];
+
+        // Apply friction
+        const friction = 0.99;
+        particle.vx *= friction;
+        particle.vy *= friction;
+
+        // Only apply return force if not exploded
+        if (!particle.isExploded) {
+          const returnForce = 0.005;
+          particle.vx += (particle.baseVx - particle.vx) * returnForce;
+          particle.vy += (particle.baseVy - particle.vy) * returnForce;
+        }
+
+        // Update position
+        particle.x += particle.vx;
+        particle.y += particle.vy;
+
+        // Check boundaries
+        if (particle.isExploded) {
+          // If exploded and off screen, replace with new particle
+          if (particle.x < -50 || particle.x > canvas.width + 50 ||
+              particle.y < -50 || particle.y > canvas.height + 50) {
+            // Much longer delay: between 2 to 5 seconds (120-300 frames)
+            const newDelay = 120 + Math.random() * 180;
+            particles[i] = createParticle(newDelay);
+          }
+        } else {
+          // Normal bounce behavior for non-exploded particles
+          if (particle.x < 0 || particle.x > canvas.width) {
+            particle.vx *= -0.7;
+            particle.x = Math.max(0, Math.min(canvas.width, particle.x));
+          }
+          if (particle.y < 0 || particle.y > canvas.height) {
+            particle.vy *= -0.7;
+            particle.y = Math.max(0, Math.min(canvas.height, particle.y));
+          }
+        }
+
+        // Mouse interaction
+        if (mouse.x !== null && mouse.y !== null) {
+          let dx = mouse.x - particle.x;
+          let dy = mouse.y - particle.y;
+          let distance = Math.sqrt(dx * dx + dy * dy);
+          
+          if (distance < mouse.radius) {
+            const force = (mouse.radius - distance) / mouse.radius;
+            const directionX = dx / distance;
+            const directionY = dy / distance;
+            
+            particle.vx -= directionX * force * 0.5;
+            particle.vy -= directionY * force * 0.5;
+          }
+        }
+
+        // Speed limit
+        const maxSpeed = particle.isExploded ? 15 : 3; // Higher speed limit for exploded particles
+        const speed = Math.sqrt(particle.vx * particle.vx + particle.vy * particle.vy);
+        if (speed > maxSpeed) {
+          particle.vx = (particle.vx / speed) * maxSpeed;
+          particle.vy = (particle.vy / speed) * maxSpeed;
+        }
+
+        // Check if particle is under specific elements
+        const elements = document.elementsFromPoint(particle.x, particle.y);
+        const isUnderMainElement = elements.some(el => 
+          el.classList.contains('bg-black/30') ||
+          (el.tagName === 'BUTTON' && !el.classList.contains('fixed'))
+        );
+
+        // Draw particle
+        const baseOpacity = 0.3;
+        const opacity = isUnderMainElement ? baseOpacity * 0.6 : baseOpacity;
+
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(139, 92, 246, ${opacity})`;
+        ctx.fill();
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = `rgba(139, 92, 246, ${opacity * 1.5})`;
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+
+    return () => {
+      window.removeEventListener('particle-explosion', explosionHandler as EventListener);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('resize', resizeCanvas);
+      canvas.remove();
+    };
+  }, []);
+
+  return null;
+};
 
 export default function Home() {
   const [showIntro, setShowIntro] = useState(true);
@@ -169,20 +352,19 @@ export default function Home() {
   };
 
   const handleBackgroundClick = useCallback((e: React.MouseEvent) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
     
-    const newEffect = {
-      x,
-      y,
-      id: nextEffectId++
-    };
-    
-    setClickEffects(prev => [...prev, newEffect]);
-    setTimeout(() => {
-      setClickEffects(prev => prev.filter(effect => effect.id !== newEffect.id));
-    }, 1000);
+    // Remove the inner circle effect
+    setClickEffects(prev => [
+      ...prev,
+      {
+        x,
+        y,
+        id: nextEffectId++
+      }
+    ]);
   }, []);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>, isWelcome = false) => {
@@ -226,331 +408,272 @@ export default function Home() {
     }
   };
 
+  const handlePfpClick = useCallback((e: React.MouseEvent) => {
+    setPfpRotation(prev => prev + 360);
+    
+    // Get the profile picture position
+    const pfpElement = e.currentTarget as HTMLElement;
+    const rect = pfpElement.getBoundingClientRect();
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+
+    // Dispatch explosion event
+    window.dispatchEvent(new CustomEvent('particle-explosion', {
+      detail: { x, y }
+    }));
+  }, []);
+
   return (
-    <div>
-      {/* Visitor Counter */}
-      <div className="fixed top-4 left-4 text-purple-300/50 text-sm z-50 flex items-center gap-2">
-        {isLoading ? (
-          <span>Loading...</span>
-        ) : (
-          <span>{visitorCount.toLocaleString()} visitors</span>
-        )}
-      </div>
+    <>
+      <ParticleCanvas />
+      <div>
+        {/* Visitor Counter */}
+        <div className="fixed top-4 left-4 text-purple-300/50 text-sm z-50 flex items-center gap-2">
+          {isLoading ? (
+            <span>Loading...</span>
+          ) : (
+            <span>{visitorCount.toLocaleString()} visitors</span>
+          )}
+        </div>
 
-      <div 
-        className="min-h-screen relative"
-        onClick={handleBackgroundClick}
-        style={{
-          background: `radial-gradient(circle at ${mousePosition.x}% ${mousePosition.y}%, rgba(93, 0, 255, 0.15) 0%, rgb(36, 0, 70) 35%, rgb(16, 0, 43) 100%)`
-        }}
-      >
-        {/* Click effects */}
-        {clickEffects.map(effect => (
-          <div
-            key={effect.id}
-            className="absolute pointer-events-none"
-            style={{
-              left: `${effect.x}%`,
-              top: `${effect.y}%`,
-              transform: 'translate(-50%, -50%)'
-            }}
-          >
-            {/* Main ripple */}
-            <div className="animate-ripple rounded-full border-[3px] border-purple-300/80" />
-            {/* Center flash */}
-            <div className="animate-flash absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-purple-200/90 rounded-full blur-[2px]" />
-          </div>
-        ))}
+        <div 
+          className="min-h-screen relative"
+          onClick={handleBackgroundClick}
+          style={{
+            background: `radial-gradient(circle at ${mousePosition.x}% ${mousePosition.y}%, rgba(93, 0, 255, 0.15) 0%, rgb(36, 0, 70) 35%, rgb(16, 0, 43) 100%)`
+          }}
+        >
+          {/* Click effects */}
+          {clickEffects.map(effect => (
+            <div
+              key={effect.id}
+              className="absolute pointer-events-none"
+              style={{
+                left: effect.x,
+                top: effect.y,
+              }}
+            >
+              {/* Remove the inner circle and flash effects, keep only the outer ring */}
+              <div
+                className="absolute -translate-x-1/2 -translate-y-1/2 border-2 border-purple-500/30 rounded-full animate-ripple"
+              />
+            </div>
+          ))}
 
-        {showIntro ? (
-          <div 
-            className="min-h-screen select-none relative text-white"
-            onClick={handleStart}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                handleStart();
-              }
-            }}
-          >
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
+          {showIntro ? (
+            <div 
+              className="min-h-screen select-none relative text-white"
+              onClick={handleStart}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  handleStart();
+                }
+              }}
+            >
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <div 
+                  ref={welcomeRef}
+                  onMouseMove={(e) => handleMouseMove(e, true)}
+                  onMouseLeave={() => handleMouseLeave(true)}
+                  className="text-center space-y-8 p-8 rounded-2xl bg-purple-900/20 backdrop-blur-sm border border-purple-500/20 shadow-xl transform transition-all duration-200 ease-out w-11/12 max-w-lg mx-auto"
+                  style={{
+                    transform: `perspective(1000px) rotateX(${welcomeTilt.x}deg) rotateY(${welcomeTilt.y}deg)`,
+                    boxShadow: `
+                      ${-welcomeTilt.y}px ${-welcomeTilt.x}px 20px rgba(139, 92, 246, 0.1),
+                      0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                      0 2px 4px -1px rgba(0, 0, 0, 0.06)
+                    `
+                  }}
+                >
+                  <h1 
+                    className="text-5xl md:text-7xl font-bold relative group cursor-default select-none animate-float"
+                    onMouseEnter={() => setTextHover(true)}
+                    onMouseLeave={() => setTextHover(false)}
+                  >
+                    {/* Enhanced glowing background effect */}
+                    <div 
+                      className="absolute inset-0 blur-[50px] bg-purple-500/50 rounded-full transition-all duration-300 group-hover:bg-purple-400/70 group-hover:blur-[100px]"
+                      style={{
+                        transform: textHover ? 'scale(1.5)' : 'scale(1)',
+                        opacity: textHover ? 1 : 0.7,
+                      }}
+                    />
+                    
+                    {/* Main text with enhanced gradient */}
+                    <span className="relative bg-clip-text text-transparent bg-gradient-to-b from-white via-purple-200 to-purple-400 hover:from-purple-100 hover:via-white hover:to-purple-300 transition-all duration-300 drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">
+                      <span className="inline-block hover:scale-125 transition-transform duration-150 hover:text-white">W</span>
+                      <span className="inline-block hover:scale-125 transition-transform duration-150 hover:text-white">e</span>
+                      <span className="inline-block hover:scale-125 transition-transform duration-150 hover:text-white">l</span>
+                      <span className="inline-block hover:scale-125 transition-transform duration-150 hover:text-white">c</span>
+                      <span className="inline-block hover:scale-125 transition-transform duration-150 hover:text-white">o</span>
+                      <span className="inline-block hover:scale-125 transition-transform duration-150 hover:text-white">m</span>
+                      <span className="inline-block hover:scale-125 transition-transform duration-150 hover:text-white">e</span>
+                    </span>
+
+                    {/* Enhanced animated border */}
+                    <div className="absolute -inset-2 border-2 border-purple-400/30 rounded-lg blur transition-all duration-300 opacity-0 group-hover:opacity-100" />
+                    
+                    {/* Additional glow effect */}
+                    <div className="absolute -inset-1 bg-gradient-to-r from-purple-600/0 via-purple-400/10 to-purple-600/0 rounded-lg blur-xl transition-all duration-300 opacity-0 group-hover:opacity-100" />
+                  </h1>
+                  <div className="text-base md:text-lg font-medium bg-purple-600/30 hover:bg-purple-500/40 px-4 md:px-8 py-3 md:py-4 rounded-lg shadow-lg transform hover:scale-110 transition-all duration-300 backdrop-blur-sm hover:shadow-purple-500/50 group">
+                    Click Anywhere to Start
+                    <div className="h-0.5 w-0 group-hover:w-full bg-purple-400/50 transition-all duration-300" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="min-h-screen text-white flex flex-col items-center justify-center p-4 md:p-8">
               <div 
-                ref={welcomeRef}
-                onMouseMove={(e) => handleMouseMove(e, true)}
-                onMouseLeave={() => handleMouseLeave(true)}
-                className="text-center space-y-8 p-8 rounded-2xl bg-purple-900/20 backdrop-blur-sm border border-purple-500/20 shadow-xl transform transition-all duration-200 ease-out w-11/12 max-w-lg mx-auto"
+                ref={containerRef}
+                onMouseMove={(e) => handleMouseMove(e)}
+                onMouseLeave={() => handleMouseLeave()}
+                className="flex flex-col items-center space-y-4 md:space-y-6 bg-black/20 backdrop-blur-sm p-6 md:p-8 rounded-2xl w-11/12 max-w-md transition-transform duration-200 ease-out"
                 style={{
-                  transform: `perspective(1000px) rotateX(${welcomeTilt.x}deg) rotateY(${welcomeTilt.y}deg)`,
+                  transform: `perspective(1000px) rotateX(${tiltEffect.x}deg) rotateY(${tiltEffect.y}deg)`,
                   boxShadow: `
-                    ${-welcomeTilt.y}px ${-welcomeTilt.x}px 20px rgba(139, 92, 246, 0.1),
+                    ${-tiltEffect.y}px ${-tiltEffect.x}px 20px rgba(139, 92, 246, 0.1),
                     0 4px 6px -1px rgba(0, 0, 0, 0.1),
                     0 2px 4px -1px rgba(0, 0, 0, 0.06)
                   `
                 }}
               >
-                <h1 
-                  className="text-5xl md:text-7xl font-bold relative group cursor-default select-none animate-float"
-                  onMouseEnter={() => setTextHover(true)}
-                  onMouseLeave={() => setTextHover(false)}
+                <div 
+                  className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-purple-500 shadow-lg animate-fade-in-scale cursor-pointer group relative"
+                  onClick={handlePfpClick}
+                  style={{
+                    transform: `rotate(${pfpRotation}deg)`,
+                    transition: 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+                  }}
                 >
-                  {/* Enhanced glowing background effect */}
-                  <div 
-                    className="absolute inset-0 blur-[50px] bg-purple-500/50 rounded-full transition-all duration-300 group-hover:bg-purple-400/70 group-hover:blur-[100px]"
-                    style={{
-                      transform: textHover ? 'scale(1.5)' : 'scale(1)',
-                      opacity: textHover ? 1 : 0.7,
-                    }}
-                  />
-                  
-                  {/* Main text with enhanced gradient */}
-                  <span className="relative bg-clip-text text-transparent bg-gradient-to-b from-white via-purple-200 to-purple-400 hover:from-purple-100 hover:via-white hover:to-purple-300 transition-all duration-300 drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">
-                    <span className="inline-block hover:scale-125 transition-transform duration-150 hover:text-white">W</span>
-                    <span className="inline-block hover:scale-125 transition-transform duration-150 hover:text-white">e</span>
-                    <span className="inline-block hover:scale-125 transition-transform duration-150 hover:text-white">l</span>
-                    <span className="inline-block hover:scale-125 transition-transform duration-150 hover:text-white">c</span>
-                    <span className="inline-block hover:scale-125 transition-transform duration-150 hover:text-white">o</span>
-                    <span className="inline-block hover:scale-125 transition-transform duration-150 hover:text-white">m</span>
-                    <span className="inline-block hover:scale-125 transition-transform duration-150 hover:text-white">e</span>
-                  </span>
-
-                  {/* Enhanced animated border */}
-                  <div className="absolute -inset-2 border-2 border-purple-400/30 rounded-lg blur transition-all duration-300 opacity-0 group-hover:opacity-100" />
-                  
-                  {/* Additional glow effect */}
-                  <div className="absolute -inset-1 bg-gradient-to-r from-purple-600/0 via-purple-400/10 to-purple-600/0 rounded-lg blur-xl transition-all duration-300 opacity-0 group-hover:opacity-100" />
-                </h1>
-                <div className="text-base md:text-lg font-medium bg-purple-600/30 hover:bg-purple-500/40 px-4 md:px-8 py-3 md:py-4 rounded-lg shadow-lg transform hover:scale-110 transition-all duration-300 backdrop-blur-sm hover:shadow-purple-500/50 group">
-                  Click Anywhere to Start
-                  <div className="h-0.5 w-0 group-hover:w-full bg-purple-400/50 transition-all duration-300" />
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="min-h-screen text-white flex flex-col items-center justify-center p-4 md:p-8">
-            <div 
-              ref={containerRef}
-              onMouseMove={(e) => handleMouseMove(e)}
-              onMouseLeave={() => handleMouseLeave()}
-              className="flex flex-col items-center space-y-4 md:space-y-6 bg-black/20 backdrop-blur-sm p-6 md:p-8 rounded-2xl w-11/12 max-w-md transition-transform duration-200 ease-out"
-              style={{
-                transform: `perspective(1000px) rotateX(${tiltEffect.x}deg) rotateY(${tiltEffect.y}deg)`,
-                boxShadow: `
-                  ${-tiltEffect.y}px ${-tiltEffect.x}px 20px rgba(139, 92, 246, 0.1),
-                  0 4px 6px -1px rgba(0, 0, 0, 0.1),
-                  0 2px 4px -1px rgba(0, 0, 0, 0.06)
-                `
-              }}
-            >
-              <div 
-                className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-purple-500 shadow-lg animate-fade-in-scale cursor-pointer group relative"
-                onClick={() => {
-                  setPfpRotation(prev => prev + 360);
-                  setShowBrainrot(true);
-                  
-                  // Stop background music
-                  if (audioRef.current) {
-                    audioRef.current.pause();
-                  }
-                  
-                  // Add initial videos
-                  for (let i = 0; i < 3; i++) {
-                    setTimeout(() => {
-                      setVideoPositions(prev => [...prev, {
-                        id: Math.random(),
-                        x: Math.random() * 80 + 10,
-                        y: Math.random() * 80 + 10,
-                        videoIndex: Math.floor(Math.random() * brainrotVideos.length)
-                      }]);
-                    }, i * 200);
-                  }
-
-                  // Keep adding videos periodically
-                  const interval = setInterval(() => {
-                    setVideoPositions(prev => [...prev, {
-                      id: Math.random(),
-                      x: Math.random() * 80 + 10,
-                      y: Math.random() * 80 + 10,
-                      videoIndex: Math.floor(Math.random() * brainrotVideos.length)
-                    }]);
-                  }, 2000);
-
-                  // Clean up interval after 30 seconds
-                  setTimeout(() => clearInterval(interval), 30000);
-                }}
-                style={{
-                  transform: `rotate(${pfpRotation}deg)`,
-                  transition: 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
-                }}
-              >
-                <Image
-                  src="/profile.jpg"
-                  alt="Profile Picture"
-                  width={128}
-                  height={128}
-                  className="object-cover transition-opacity group-hover:opacity-90"
-                  priority
-                  onContextMenu={(e) => e.preventDefault()}
-                  draggable="false"
-                />
-                <span className="absolute inset-0 flex items-center justify-center text-sm text-purple-300/80 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none bg-black/40 backdrop-blur-[2px]">
-                  click me
-                </span>
-              </div>
-              <h1 className="text-2xl md:text-3xl font-bold text-white">Darnix</h1>
-              <p className="text-purple-300/50 text-sm mt-0.5">(darnixgotbanned on discord)</p>
-              <p className="text-purple-300 text-center text-base md:text-lg">
-                Proud <a href="https://fatality.win/members/darnix.49526/" className="text-purple-400 hover:text-purple-300 transition-colors font-semibold hover:scale-110 inline-block">
-                  fatality
-                </a> user & aspiring developer
-              </p>
-
-              <p className="text-purple-200/40 text-center text-sm italic mt-1">
-                "The quieter you become, the more you can hear"
-              </p>
-            </div>
-
-            {/* Buttons and Audio Controls Container */}
-            <div className="mt-8 md:mt-12 w-11/12 max-w-md z-10 space-y-6 md:space-y-8">
-              {/* Buttons */}
-              <div className="space-y-3 md:space-y-4">
-                <a
-                  href="https://steamcommunity.com/id/shikanokonokokoschitantan/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center bg-gradient-to-b from-purple-600 to-purple-700 text-white px-6 py-4 rounded-lg transition-all hover:scale-110 shadow-lg w-full hover:shadow-purple-500/50 hover:from-purple-500 hover:to-purple-600 hover:shadow-xl"
-                >
-                  <span>Steam</span>
-                </a>
-
-                <a
-                  href="https://github.com/Darnix-a"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center bg-gradient-to-b from-purple-700 to-purple-800 text-white px-6 py-4 rounded-lg transition-all hover:scale-110 shadow-lg w-full hover:shadow-purple-600/50 hover:from-purple-600 hover:to-purple-700 hover:shadow-xl"
-                >
-                  <span>GitHub</span>
-                </a>
-
-                <a
-                  href="https://www.faceit.com/en/players/d4rnix"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center bg-gradient-to-b from-purple-800 to-purple-900 text-white px-6 py-4 rounded-lg transition-all hover:scale-110 shadow-lg w-full hover:shadow-purple-700/50 hover:from-purple-700 hover:to-purple-800 hover:shadow-xl"
-                >
-                  <span>FACEIT</span>
-                </a>
-
-                <a
-                  href="https://www.youtube.com/@bingusschmingus"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center bg-gradient-to-b from-purple-900 to-purple-950 text-white px-6 py-4 rounded-lg transition-all hover:scale-110 shadow-lg w-full hover:shadow-purple-800/50 hover:from-purple-800 hover:to-purple-900 hover:shadow-xl"
-                >
-                  <span>YouTube</span>
-                </a>
-              </div>
-
-              {/* Audio Controls - now same width as buttons */}
-              <div className="bg-black/30 backdrop-blur-sm rounded-xl overflow-hidden">
-                <div className="flex items-center px-4 py-4">
-                  <button
-                    onClick={togglePlay}
-                    className="p-2.5 rounded-lg bg-purple-600/30 hover:bg-purple-500/40 transition-all duration-300 group mr-4"
-                  >
-                    {isPlaying ? (
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 md:h-6 md:w-6 text-purple-200/80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6" />
-                      </svg>
-                    ) : (
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 md:h-6 md:w-6 text-purple-200/80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    )}
-                  </button>
-                  
-                  <div className="flex-1 flex items-center">
-                    <svg 
-                      xmlns="http://www.w3.org/2000/svg" 
-                      className="h-4 w-4 md:h-5 md:w-5 text-purple-300/50 mr-3" 
-                      viewBox="0 0 20 20" 
-                      fill="currentColor"
-                    >
-                      <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clipRule="evenodd" />
-                    </svg>
-                    <input
-                      type="range"
-                      min="0"
-                      max="1"
-                      step="0.01"
-                      value={volume}
-                      onChange={handleVolumeChange}
-                      className="w-full h-2 rounded-lg appearance-none cursor-pointer bg-purple-900/30 
-                        [&::-webkit-slider-thumb]:appearance-none 
-                        [&::-webkit-slider-thumb]:h-3.5 
-                        [&::-webkit-slider-thumb]:w-3.5 
-                        md:[&::-webkit-slider-thumb]:h-4 
-                        md:[&::-webkit-slider-thumb]:w-4 
-                        [&::-webkit-slider-thumb]:rounded-full 
-                        [&::-webkit-slider-thumb]:bg-purple-400 
-                        hover:[&::-webkit-slider-thumb]:bg-purple-300 
-                        [&::-webkit-slider-thumb]:transition-colors
-                        [&::-webkit-slider-thumb]:shadow-sm"
+                  <div className="relative">
+                    <Image
+                      src="/profile.jpg"
+                      alt="Profile Picture"
+                      width={128}
+                      height={128}
+                      className="object-cover transition-opacity group-hover:opacity-90"
+                      priority
+                      onContextMenu={(e) => e.preventDefault()}
+                      draggable="false"
                     />
+                  </div>
+                  <span className="absolute inset-0 flex items-center justify-center text-sm text-purple-300/80 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none bg-black/40 backdrop-blur-[2px]">
+                    click me
+                  </span>
+                </div>
+                <h1 className="text-2xl md:text-3xl font-bold text-white">Darnix</h1>
+                <p className="text-purple-300/50 text-sm mt-0.5">(darnixgotbanned on discord)</p>
+                <p className="text-purple-300 text-center text-base md:text-lg">
+                  Proud <a href="https://fatality.win/members/darnix.49526/" className="text-purple-400 hover:text-purple-300 transition-colors font-semibold hover:scale-110 inline-block">
+                    fatality
+                  </a> user & aspiring developer
+                </p>
+
+                <p className="text-purple-200/40 text-center text-sm italic mt-1">
+                  "The quieter you become, the more you can hear"
+                </p>
+              </div>
+
+              {/* Buttons and Audio Controls Container */}
+              <div className="mt-8 md:mt-12 w-11/12 max-w-md z-10 space-y-6 md:space-y-8">
+                {/* Buttons */}
+                <div className="space-y-3 md:space-y-4">
+                  <a
+                    href="https://steamcommunity.com/id/shikanokonokokoschitantan/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center bg-gradient-to-b from-purple-600 to-purple-700 text-white px-6 py-4 rounded-lg transition-all hover:scale-110 shadow-lg w-full hover:shadow-purple-500/50 hover:from-purple-500 hover:to-purple-600 hover:shadow-xl"
+                  >
+                    <span>Steam</span>
+                  </a>
+
+                  <a
+                    href="https://github.com/Darnix-a"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center bg-gradient-to-b from-purple-700 to-purple-800 text-white px-6 py-4 rounded-lg transition-all hover:scale-110 shadow-lg w-full hover:shadow-purple-600/50 hover:from-purple-600 hover:to-purple-700 hover:shadow-xl"
+                  >
+                    <span>GitHub</span>
+                  </a>
+
+                  <a
+                    href="https://www.faceit.com/en/players/d4rnix"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center bg-gradient-to-b from-purple-800 to-purple-900 text-white px-6 py-4 rounded-lg transition-all hover:scale-110 shadow-lg w-full hover:shadow-purple-700/50 hover:from-purple-700 hover:to-purple-800 hover:shadow-xl"
+                  >
+                    <span>FACEIT</span>
+                  </a>
+
+                  <a
+                    href="https://www.youtube.com/@bingusschmingus"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center bg-gradient-to-b from-purple-900 to-purple-950 text-white px-6 py-4 rounded-lg transition-all hover:scale-110 shadow-lg w-full hover:shadow-purple-800/50 hover:from-purple-800 hover:to-purple-900 hover:shadow-xl"
+                  >
+                    <span>YouTube</span>
+                  </a>
+                </div>
+
+                {/* Audio Controls - now same width as buttons */}
+                <div className="bg-black/30 backdrop-blur-sm rounded-xl overflow-hidden">
+                  <div className="flex items-center px-4 py-4">
+                    <button
+                      onClick={togglePlay}
+                      className="p-2.5 rounded-lg bg-purple-600/30 hover:bg-purple-500/40 transition-all duration-300 group mr-4"
+                    >
+                      {isPlaying ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 md:h-6 md:w-6 text-purple-200/80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6" />
+                        </svg>
+                      ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 md:h-6 md:w-6 text-purple-200/80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      )}
+                    </button>
+                    
+                    <div className="flex-1 flex items-center">
+                      <svg 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        className="h-4 w-4 md:h-5 md:w-5 text-purple-300/50 mr-3" 
+                        viewBox="0 0 20 20" 
+                        fill="currentColor"
+                      >
+                        <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clipRule="evenodd" />
+                      </svg>
+                      <input
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.01"
+                        value={volume}
+                        onChange={handleVolumeChange}
+                        className="w-full h-2 rounded-lg appearance-none cursor-pointer bg-purple-900/30 
+                          [&::-webkit-slider-thumb]:appearance-none 
+                          [&::-webkit-slider-thumb]:h-3.5 
+                          [&::-webkit-slider-thumb]:w-3.5 
+                          md:[&::-webkit-slider-thumb]:h-4 
+                          md:[&::-webkit-slider-thumb]:w-4 
+                          [&::-webkit-slider-thumb]:rounded-full 
+                          [&::-webkit-slider-thumb]:bg-purple-400 
+                          hover:[&::-webkit-slider-thumb]:bg-purple-300 
+                          [&::-webkit-slider-thumb]:transition-colors
+                          [&::-webkit-slider-thumb]:shadow-sm"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-
-            {showBrainrot && videoPositions.map(pos => (
-              <div
-                key={pos.id}
-                className="fixed w-32 h-32 md:w-48 md:h-48 pointer-events-none"
-                style={{
-                  left: `${pos.x}%`,
-                  top: `${pos.y}%`,
-                  transform: 'translate(-50%, -50%)',
-                  zIndex: 20
-                }}
-              >
-                <video
-                  ref={(el) => {
-                    if (el) {
-                      videoRefs.current[pos.id] = el;
-                      el.volume = brainrotVideos[pos.videoIndex] === '/brainrot2.mp4' ? 0.6 : 1;
-                    }
-                  }}
-                  autoPlay
-                  loop
-                  playsInline
-                  className="w-full h-full object-cover rounded-lg opacity-80 animate-fade-in-scale"
-                >
-                  <source src={brainrotVideos[pos.videoIndex]} type="video/mp4" />
-                </video>
-              </div>
-            ))}
-
-            {showBrainrot && (
-              <button
-                onClick={() => {
-                  setShowBrainrot(false);
-                  setVideoPositions([]);
-                  // Restore background music
-                  if (audioRef.current) {
-                    audioRef.current.volume = logToLinear(volume);
-                    audioRef.current.play();
-                  }
-                }}
-                className="fixed bottom-4 right-4 z-50 bg-purple-600/80 hover:bg-purple-500/80 text-white px-4 py-2 rounded-lg backdrop-blur-sm transition-all duration-200 hover:scale-110"
-              >
-                Make it stop 💀
-              </button>
-            )}
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

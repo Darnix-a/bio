@@ -65,17 +65,6 @@ a:hover {
   }
 }
 
-@keyframes particle {
-  0% {
-    transform: translateY(0) rotate(0);
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(60px);
-    opacity: 0;
-  }
-}
-
 @keyframes cross {
   0% {
     width: 0;
@@ -104,10 +93,6 @@ a:hover {
 
 .animate-flash {
   animation: flash 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-
-.animate-particle {
-  animation: particle 0.6s cubic-bezier(0.2, 0.6, 0.3, 1) forwards;
 }
 
 .animate-cross {
